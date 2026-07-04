@@ -1,0 +1,27 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# Repo-specific local configs
+repos/*.repo.env
+!repos/example.repo.env.example
+
+# Runtime state
+state/logs/
+state/runs/
+state/*.pid
+
+# Node
+node_modules/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

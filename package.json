@@ -1,0 +1,7 @@
+{
+  "name": "opencode-agent-factory",
+  "private": true,
+  "version": "0.1.1",
+  "description": "Portable local-first autonomous software factory for OpenCode + GitHub",
+  "license": "MIT"
+}
