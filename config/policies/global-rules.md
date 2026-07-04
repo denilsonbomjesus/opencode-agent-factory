@@ -1,0 +1,11 @@
+# Global Factory Rules
+- Trabalhe sempre em branch dedicada por tarefa.
+- Nunca faça edição destrutiva ampla; prefira patch mínimo.
+- TDD é obrigatório: escreva ou atualize testes antes de concluir a implementação.
+- Ao errar, pare, registre a hipótese e corrija com base no log do teste.
+- Não use `any` em TypeScript; não silencie linter sem justificativa textual.
+- Rode testes, lint e revisão antes de commit/push.
+- Se faltar contexto, declare premissas em até 5 bullets; se a incerteza bloquear a tarefa, pare e peça intervenção humana.
+- Não exponha segredos nem grave tokens em arquivos do repositório do projeto-alvo.
+- Respeite o limite de contexto: injete árvore de arquivos + arquivos impactados + logs relevantes, nada além disso.
+- Ao exceder `MAX_RETRIES`, marcar como bloqueado e devolver relatório curto para revisão humana.
