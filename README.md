@@ -333,14 +333,85 @@ DEFAULT_LABEL="ai-run"
 - `LOCAL_PATH`: caminho local do clone que será modificado.
 - `BASE_BRANCH`: branch-base desse repositório, por exemplo `main` ou `master`.
 - `TASK_KIND`: pode servir como documentação operacional; o fluxo atual aceita issue ou PR.
-- `TEST_COMMAND`: comando real de testes.
-- `LINT_COMMAND`: comando real de lint.
-- `FORMAT_COMMAND`: comando real de formatação.
-- `BUILD_COMMAND`: comando opcional de build.
+- `TEST_COMMAND`: comando real de testes (opcional — pode ficar vazio).
+- `LINT_COMMAND`: comando real de lint (opcional — pode ficar vazio).
+- `FORMAT_COMMAND`: comando real de formatação (opcional — pode ficar vazio).
+- `BUILD_COMMAND`: comando opcional de build (pode ficar vazio).
 - `PR_BRANCH_PREFIX`: prefixo usado na convenção de branches.
 - `DEFAULT_LABEL`: label que dispara a fila naquele repositório.
 
 > Importante: sempre coloque comandos com espaços entre aspas. Exemplo correto: `TEST_COMMAND="npm test"`.
+
+### E se eu quiser deixar TEST_COMMAND, LINT_COMMAND e FORMAT_COMMAND vazios?
+
+Sim, é totalmente possível. Esses campos são **opcionais**. Você pode tanto omiti-los do arquivo quanto deixá-los vazios (`=""`).
+
+Isso é útil quando você quer conectar um repositório novo na fábrica sem ter decidido ainda a linguagem, os testes ou as ferramentas de lint e formatação. Basta descrever na Issue exatamente o que você quer — o agente OpenCode cuida do resto.
+
+#### O que acontece internamente
+
+O `scripts/run-pipeline.sh` usa a sintaxe `${TEST_COMMAND:-}` no Bash. Isso significa: "use o valor da variável, ou string vazia se ela não existir". A função que executa os comandos pula automaticamente quando o valor está vazio:
+
+```bash
+run_cmd() {
+  local label="$1"
+  local cmd="$2"
+  [ -n "$cmd" ] || return 0    # Se vazio, simplesmente ignora
+  log "$label: $cmd"
+  bash -lc "$cmd"
+}
+```
+
+Além disso, o bloco de reteste e relint só executa se `FORMAT_COMMAND` tiver conteúdo:
+
+```bash
+if [ -n "${FORMAT_COMMAND:-}" ]; then
+  run_cmd "Retest" "${TEST_COMMAND:-}"
+  run_cmd "Relint" "${LINT_COMMAND:-}"
+fi
+```
+
+Resultado: com os campos vazios, o pipeline simplesmente **pula todos esses passos sem erro nenhum**.
+
+#### Como descrever os testes na própria Issue
+
+Mesmo com comandos vazios, o agente OpenCode já recebe a instrução de criar, executar e corrigir testes. No prompt enviado pelo `run-pipeline.sh`, consta:
+
+- Crie ou atualize testes obrigatoriamente.
+- Rode e corrija até ficar verde em testes, lint e format.
+- Não pergunte por autorização.
+
+Você pode descrever na Issue exatamente como quer os testes — framework, cobertura, o que testar — que o agente implementa, executa e corrige. A validação fica por conta do próprio agente.
+
+#### Diferença entre comandos preenchidos e vazios
+
+| Situação | O que acontece |
+|----------|----------------|
+| `TEST_COMMAND="npm test"` | OpenCode cria código e testes. Depois o **shell também valida** rodando `npm test`. Dupla verificação. |
+| `TEST_COMMAND=""` | OpenCode cria código e testes. A validação **fica apenas sob palavra do agente** — ele reporta `DONE`, `BLOCKED` ou `NEEDS_HUMAN`. |
+
+#### Estratégia recomendada
+
+1. Comece com comandos vazios e conecte o repositório.
+2. Deixe o agente criar os primeiros testes e estruturas.
+3. Quando o projeto amadurecer, edite o `.repo.env` e preencha os comandos reais.
+4. A partir daí, o shell fará a validação dupla.
+
+```env
+# Fase 1 — início sem definir nada
+TEST_COMMAND=""
+LINT_COMMAND=""
+FORMAT_COMMAND=""
+BUILD_COMMAND=""
+```
+
+```env
+# Fase 2 — projeto maduro com comandos definidos
+TEST_COMMAND="npm test"
+LINT_COMMAND="npm run lint"
+FORMAT_COMMAND="npx prettier --write ."
+BUILD_COMMAND="npm run build"
+```
 
 ## Como preparar novos repositórios
 
